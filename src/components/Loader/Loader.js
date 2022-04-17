@@ -1,14 +1,17 @@
-import { TailSpin } from 'react-loader-spinner'
-import s from "./Loader.module.css"
+import { createPortal } from 'react-dom';
+import { TailSpin } from 'react-loader-spinner';
+import React from 'react';
+import 'react-loader-spinner/dist/loader/css/react-spinner-loader.css';
+import s from './Loader.module.css';
 
-export default function Loader() { 
-    return (<div className={ s.Loader }>
-        <TailSpin
-        height="100"
-        width="100"
-        color='#3f51b5'
-        ariaLabel='loading'
-        />
-    </div>)
+const loaderRoot = document.querySelector('#loader-root');
+
+function Loader() {
+  return createPortal(
+    <div className={s.loader}>
+      <TailSpin color="#00BFFF" height={80} width={80} />
+    </div>,
+    loaderRoot
+  );
 }
-
+export default Loader;

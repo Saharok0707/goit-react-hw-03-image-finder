@@ -1,33 +1,67 @@
-import PropTypes from "prop-types";
-import { FcSearch } from 'react-icons/fc';
-import s from "./Searchbar.module.css"
+import { Component } from 'react';
+import s from './Searchbar.module.css';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
+class Searchbar extends Component {
+  state = {
+    name: '',
+    page: 1,
+  };
 
-export default function Searchbar({ setQuery, searchQueryValue, searchReset }) {
+  handleSubmit = e => {
+    e.preventDefault();
+
+    if (this.state.name.trim() === '') {
+      toast.info('Enter your request.');
+      return;
+    }
+
+    this.props.onSubmit(this.state.name);
+
+    this.reset();
+  };
+
+  reset = () => {
+    this.setState({
+      name: '',
+    });
+  };
+
+  handleChange = e => {
+    const { value } = e.currentTarget;
+    this.setState({
+      name: value,
+    });
+  };
+
+  render() {
+    const { name } = this.state;
+
     return (
-        <header className={ s.Searchbar }>
-        <form className={ s.SearchForm } onSubmit={searchReset}>
-            <button type="submit" className={s.SearchFormButton} >
-                <FcSearch style={{ width: 25, height: 25 }}/> <span className={s.SearchFormButtonLabel}>Search</span>
+      <div>
+        <header className={s.searchbar}>
+          <form className={s.form} onSubmit={this.handleSubmit}>
+            <button type="submit" className={s.button}>
+              <span className={s.button_label}>Search</span>
             </button>
 
             <input
-                className={ s.SearchFormInput }
-                type="text"
-                autoComplete="off"
-                autoFocus
-                placeholder="Search images and photos"
-                value={searchQueryValue}
-                // onSubmit={setQuery}
-                onChange={setQuery}
+              onChange={this.handleChange}
+              className={s.input}
+              type="text"
+              name="name"
+              value={name}
+              autoComplete="off"
+              autoFocus
+              placeholder="Search images and photos"
             />
-        </form>
+          </form>
         </header>
-    )
-};
-
-Searchbar.propTypes = {
-    setQuery: PropTypes.func.isRequired,
-    searchQueryValue: PropTypes.string.isRequired,
-    searchReset: PropTypes.func.isRequired
+        <ToastContainer autoClose={3000} theme={'colored'} />
+      </div>
+    );
+  }
 }
+
+export default Searchbar;

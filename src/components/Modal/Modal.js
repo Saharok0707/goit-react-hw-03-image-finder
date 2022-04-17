@@ -1,55 +1,46 @@
 import React, { Component } from 'react';
-import PropType from "prop-types"
-import s from "./Modal.module.css"
+import { createPortal } from 'react-dom';
+import s from './Modal.module.css';
+import PropTypes from 'prop-types';
 
+const modalRoot = document.querySelector('#modal-root');
 
-export default class Modal extends Component { 
-    // state = {
-    //     visible: false,
-    //     modalImg: ""
-    // };
-    
-    // toggle = (image) => {
-    // this.setState(prevState => ({
-    //     visible: !prevState.visible,
-    //     modalImg:image
-    // }));
-    // };
-    
-    componentDidMount(){
-    window.addEventListener('keydown', this.onEscPress)
+export default class Modal extends Component {
+  componentDidMount() {
+    window.addEventListener('keydown', this.handleEscClick);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('keydown', this.handleEscClick);
+  }
+
+  handleEscClick = e => {
+    if (e.code === 'Escape') {
+      this.props.onClick();
     }
+  };
 
-    onEscPress=(event)=>{
-        if (event.code === 'Escape') {
-            this.props.modalToggle()
-        }
-    }
-
-    componentWillUnmount(){
-        window.removeEventListener('keydown', this.onEscPress)
-    }
-
-    render() { 
-        // const { visible } = this.state;
-        console.log(this.props)
-        return (
-            
-            <div className={s.Overlay} onClick={(event) => {
-                console.log(event)
-                if (event.target === event.currentTarget) {
-                    this.props.modalToggle()
-                }
-            }}>
-                <div className={ s.Modal }>
-                    <img src={ this.props.image } alt={ this.props.tags } />
-                </div>
-            </div>
-        )
-    }
-};
-
-Modal.protoTypes = {
-    modalToggle: PropType.func.isRequired,
-    image:PropType.string.isRequired
+  render() {
+    const { onClick, image } = this.props;
+    return createPortal(
+      <div
+        className={s.overlay}
+        onClick={e => {
+          if (e.target === e.currentTarget) {
+            onClick();
+          }
+        }}
+      >
+        <div className={s.modal}>
+          <img src={image} alt={image.tags} />
+        </div>
+      </div>,
+      modalRoot
+    );
+  }
 }
+
+Modal.propTypes = {
+  onClick: PropTypes.func,
+  image: PropTypes.string,
+};

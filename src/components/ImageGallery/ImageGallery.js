@@ -1,24 +1,27 @@
-import PropTypes from "prop-types";
-import s from "./ImageGallery.module.css";
-import ImageGalleryItem from "../ImageGalleryItem"
+import ImageGalleryItem from 'components/ImageGalleryItem';
+import s from './ImageGallery.module.css';
+import PropTypes from 'prop-types';
 
-export default function ImageGallery({ images, modalToggle }) { 
-    
-    return (
-        <ul className={s.ImageGallery}>
-            {
-                images.map(image => { 
-                    // console.log(image)
-                    return (
-                        <ImageGalleryItem modalToggle={ modalToggle } key={ image.id } imageUrl={ image.webformatURL } tags={ image.tags } modalImage={ image.largeImageURL } />
-                    )
-                })
-            }    
-        </ul>
-    )
+function ImageGallery({ arrayImage, toggleModal }) {
+  return (
+    <ul className={s.gallery}>
+      {arrayImage.map(({ id, webformatURL, tags, largeImageURL }) => (
+        <ImageGalleryItem
+          key={id}
+          webformatURL={webformatURL}
+          tags={tags}
+          largeImage={largeImageURL}
+          onClickItem={() => {
+            toggleModal(largeImageURL);
+          }}
+        />
+      ))}
+    </ul>
+  );
+}
+ImageGallery.protoTypes = {
+  onClickItem: PropTypes.func.isRequired,
+  arrayImage: PropTypes.array.isRequired,
 };
 
-ImageGallery.propTypes = {
-    images: PropTypes.array,
-    modalToggle: PropTypes.func.isRequired
-}
+export default ImageGallery;

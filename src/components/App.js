@@ -1,92 +1,126 @@
-import React, { Component } from "react";
-import "./App.module.css"
-import Searchbar from "./Searchbar"
-import ImageGallery from "./ImageGallery"
-import Button from "./Button";
-import Loader from "./Loader"
-import Modal from "./Modal";
-// import Modal from "./Modal/Modal"
+import { Component } from 'react';
+import Button from './Button';
+import ImageGallery from './ImageGallery';
+import Api from 'services/api';
 
+import Loader from './Loader';
+import Modal from './Modal';
+import Searchbar from './Searchbar';
+import s from './App.module.css';
 
-export default class App extends Component { 
-    state = {
-        pending: false,
-        page: 1,
-        pagination: 12,
-        searchQuery: "",
-        key: "24779492-e45231f5fdfd8f5bb8624d13c",
-        mainUrl: "https://pixabay.com/api/",
-        searchSettings: "?image_type=photo&orientation=horizontal&safesearch=true&",        
-        images: [],
-        modalVisible: false,
-        modalImage: "",
-        modalTags:""
+class App extends Component {
+  state = {
+    name: '',
+    page: 1,
+    arrayImage: [],
+    status: 'idle',
+    error: '',
+    showModal: false,
+    bigImage: '',
+    totalHits: 1,
+  };
+
+  componentDidUpdate(prevProps, prevState) {
+    const prevName = prevState.name;
+    const nextName = this.state.name;
+    const prevPage = prevState.page;
+    const nextPage = this.state.page;
+
+    if (prevName !== nextName) {
+      this.setState({ status: 'pending', page: 1, arrayImage: [] });
+      this.fetchSearchMovies(nextName, this.state.page);
+    }
+    if (prevPage !== nextPage) {
+      this.fetchSearchMovies(nextName, nextPage);
+    }
+    if (nextPage > 1) {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+  }
+
+  handleSubmit = name => {
+    this.setState({ name, page: 1, status: 'pending' });
+  };
+
+  handleLoadButton() {
+    this.setState(prevState => ({ page: prevState.page + 1 }));
+  }
+
+  fetchSearchMovies(nextName, nextPage) {
+    Api.fetchSearchMovies(nextName, nextPage)
+      .then(data => {
+        this.setState(prevState => {
+          return {
+            totalHits: data.totalHits,
+            prevState,
+            arrayImage: [...prevState.arrayImage, ...data.hits],
+            status: 'resolved',
+            imageSearch: nextName,
+          };
+        });
+      })
+      .catch(error => this.setState({ error, status: 'rejected' }));
+  }
+
+  toggleModal = largeImageURL => {
+    this.setState(({ showModal, bigImage }) => ({
+      showModal: !showModal,
+      bigImage: largeImageURL,
+    }));
+  };
+
+  closeModal = () => {
+    this.setState({
+      showModal: false,
+    });
+  };
+
+  render() {
+    const { arrayImage, bigImage, showModal, status, error, totalHits } =
+      this.state;
+
+    if (status === 'pending') {
+      return <Loader />;
     }
 
-    componentDidUpdate() {
-        if (this.state.pending) {
-            fetch(
-                `${this.state.mainUrl}?q=${this.state.searchQuery}&page=${this.state.page}&key=${this.state.key}&image_type=photo&orientation=horizontal&per_page=${this.state.pagination}`).then(response => {
-                    if (response.ok) {
-                        // console.log(response.json())
-                        this.setState({ pending: false })
-                        return response.json()                        
-                    }                   
-                }
-            ).then(console.log()).then((img => {
-                console.log(img)
-        if (img.totalHits !== 0)
-             this.setState(            
-            (prevState) => ({
-            images:
-              this.state.page > 1
-                ? [...prevState.images, ...img.hits]
-                : img.hits
-            })               
-            )
-        })).catch((error) => console.log(error))            
-        }
-    };
+    if (status === 'rejected') {
+      return <div>{error}</div>;
+    }
 
-    setQuery = (event) => {
-        // console.log(event)
-        this.setState({ searchQuery: event.currentTarget.value })
-    };
-    
-    searchReset = (event) => {
-        event.preventDefault()
-        this.setState({ pending: true, page: 1, images: [] })
-    };
+    if (status === 'idle') {
+      return <Searchbar onSubmit={this.handleSubmit} />;
+    }
 
-    nextPage() {
-        this.setState(prevState => ({
-            pending: true,
-            page: prevState.page + 1,
-        }))
-    };
+    console.log(totalHits);
+    console.log(arrayImage.length);
 
-    modalToggle = (image, tags) => {
-        console.log(image)
-        console.log(tags)
-        this.setState(prevState => ({ modalVisible: !prevState.modalVisible, modalImage: image, modalTags: tags }))
-    };
+    if (status === 'resolved') {
+      return (
+        <div className={s.App}>
+          <Searchbar onSubmit={this.handleSubmit} />
+          <ImageGallery
+            arrayImage={arrayImage}
+            toggleModal={largeImageURL => this.toggleModal(largeImageURL)}
+          />
 
-    render() {
-        const { searchQuery, page, pending, images, modalImage, modalTags } = this.state;
-        return(
-            <div>               
-                <Searchbar  
-                    setQuery={ this.setQuery }    
-                    searchQueryValue={ searchQuery }                
-                    searchReset={ this.searchReset }    
-                />
+          {arrayImage.length !== totalHits && (
+            <Button onClick={() => this.handleLoadButton()} />
+          )}
+          {showModal && (
+            <Modal
+              onClick={() => {
+                this.toggleModal();
+              }}
+              image={bigImage}
+            />
+          )}
+        </div>
+      );
+    }
+  }
+}
 
-                { pending && page === 1 ? <Loader /> : images.length > 0 ? <ImageGallery images={ images } modalToggle={ this.modalToggle } /> : null }    
-                
-                {images.length > 0 ? <Button nextPage={ this.nextPage.bind(this)} /> : null }
-                
-                {this.state.modalVisible && <Modal modalToggle={ this.modalToggle } image={ modalImage } tags={ modalTags }/> }
-            </div>
-        )
-     }
-};
+export default App;
